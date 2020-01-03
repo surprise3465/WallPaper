@@ -10,18 +10,20 @@ using SharpDX.IO;
 using WIC = SharpDX.WIC;
 using SharpDX;
 using Microsoft.Win32;
-using System.Drawing;
 using System.Linq;
 using System.Numerics;
 using SharpDX.Mathematics.Interop;
-using System.Windows;
 using System.Windows.Forms;
+
 namespace WallPaper
 {
     class Program
     {
         public static HttpClient http = new HttpClient();
-        public static string GenerateWallpaper(string pictureFileName, string english)
+
+
+        private static readonly Translate Translator = new Translate();
+        public static string GenerateWallpaper(string pictureFileName, string english, string chinese)
         {
             var wic = new WIC.ImagingFactory2();
             var d2d = new D2D.Factory();
@@ -50,6 +52,14 @@ namespace WallPaper
                         var center = new Vector2((target.Size.Width - textLayout.Metrics.Width) / 2, (target.Size.Height - textLayout.Metrics.Height) / 2);
                         target.DrawTextLayout(new RawVector2(center.X, center.Y), textLayout, brush);
                     }
+                    {
+
+                        var textLayout = new DWrite.TextLayout(dwriteFactory, chinese, textFormat, target.Size.Width * 0.75f, float.MaxValue);
+                        var center = new Vector2((target.Size.Width - textLayout.Metrics.Width) / 2, target.Size.Height - textLayout.Metrics.Height - size.Height / 18);
+                        target.DrawTextLayout(new RawVector2(center.X, center.Y), textLayout, brush);
+                    }
+
+                   
                 }
                 target.EndDraw();
 
@@ -82,7 +92,7 @@ namespace WallPaper
             var url = @"https://favqs.com/api/qotd";
             var content = await http.GetStringAsync(url);
             var json = JToken.Parse(content);
-            return json["quote"]["body"] + "\r\n\t\t\t\t——" + json["quote"]["author"];
+            return json["quote"]["body"] + "——" + json["quote"]["author"];
         }
 
         public static async Task<string> GetBingPicture()
@@ -186,8 +196,10 @@ namespace WallPaper
         {
             string url = await GetBingPicture();
             string english = await GetQuote();
+            string chinese = Translator.GoogleTranslate(english, "en", "zh-CN");
+            
             string file = await DownloadUrlAsFileName(url);
-            string wallpaperFileName = GenerateWallpaper(file, english);
+            string wallpaperFileName = GenerateWallpaper(file, english, chinese);
             Wallpaper.Set(wallpaperFileName, Wallpaper.Style.Centered);
         }
         
