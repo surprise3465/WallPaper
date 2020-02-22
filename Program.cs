@@ -14,6 +14,7 @@ using System.Linq;
 using System.Numerics;
 using SharpDX.Mathematics.Interop;
 using System.Windows.Forms;
+using Newtonsoft.Json;
 
 namespace WallPaper
 {
@@ -23,7 +24,7 @@ namespace WallPaper
 
 
         private static readonly Translate Translator = new Translate();
-        public static string GenerateWallpaper(string pictureFileName, string english, string chinese)
+        public static string GenerateWallpaper(string pictureFileName, string english, string chinese, string weather )
         {
             var wic = new WIC.ImagingFactory2();
             var d2d = new D2D.Factory();
@@ -58,8 +59,13 @@ namespace WallPaper
                         var center = new Vector2((target.Size.Width - textLayout.Metrics.Width) / 2, target.Size.Height - textLayout.Metrics.Height - size.Height / 18);
                         target.DrawTextLayout(new RawVector2(center.X, center.Y), textLayout, brush);
                     }
+                    {
 
-                   
+                        var textLayout = new DWrite.TextLayout(dwriteFactory, weather, textFormat, target.Size.Width * 0.75f, float.MaxValue);
+                        var center = new Vector2((target.Size.Width - textLayout.Metrics.Width) / 2, size.Height / 18 + textLayout.Metrics.Height);
+                        target.DrawTextLayout(new RawVector2(center.X, center.Y), textLayout, brush);
+                    }
+
                 }
                 target.EndDraw();
 
@@ -93,6 +99,18 @@ namespace WallPaper
             var content = await http.GetStringAsync(url);
             var json = JToken.Parse(content);
             return json["quote"]["body"] + "——" + json["quote"]["author"];
+        }
+        public static async Task<string> GetWeather()
+        {
+            string weather;
+            var url = @"http://t.weather.sojson.com/api/weather/city/101070201";
+            var content = await http.GetStringAsync(url);
+            var WeatherMessage = JsonConvert.DeserializeObject<JsonInfo>(content);
+            weather = WeatherMessage.cityinfo.city + " 当前温度 " + WeatherMessage.data.wendu + "℃ ";
+            weather += WeatherMessage.data.forecast[0].low + " " + WeatherMessage.data.forecast[0].high + " ";
+            weather += WeatherMessage.data.forecast[0].type + "\r\n";
+            weather += WeatherMessage.time.ToString();
+            return weather;
         }
 
         public static async Task<string> GetBingPicture()
@@ -197,9 +215,9 @@ namespace WallPaper
             string url = await GetBingPicture();
             string english = await GetQuote();
             string chinese = Translator.GoogleTranslate(english, "en", "zh-CN");
-            
+            string weather = await GetWeather();
             string file = await DownloadUrlAsFileName(url);
-            string wallpaperFileName = GenerateWallpaper(file, english, chinese);
+            string wallpaperFileName = GenerateWallpaper(file, english, chinese, weather);
             Wallpaper.Set(wallpaperFileName, Wallpaper.Style.Centered);
         }
         
