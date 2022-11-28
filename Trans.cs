@@ -18,50 +18,59 @@ namespace WallPaper
         public string GoogleTranslate(string text, string fromLanguage, string toLanguage)
         {
             CookieContainer cc = new CookieContainer();
-
+            string ResultText = string.Empty;
             string tk = TokenGenerator.GetToken(text);
-            string googleTransUrl = "https://translate.google.cn/translate_a/single?client=t&sl=" + fromLanguage + "&tl=" + toLanguage + "&hl=en&dt=at&dt=bd&dt=ex&dt=ld&dt=md&dt=qca&dt=rw&dt=rm&dt=ss&dt=t&ie=UTF-8&oe=UTF-8&otf=1&ssel=0&tsel=0&kc=1&tk=" + tk + "&q=" + HttpUtility.UrlEncode(text);
+            string googleTransUrl = "https://translate.google.com.hk/translate_a/single?client=t&sl=" + fromLanguage + "&tl=" + toLanguage + "&hl=en&dt=at&dt=bd&dt=ex&dt=ld&dt=md&dt=qca&dt=rw&dt=rm&dt=ss&dt=t&ie=UTF-8&oe=UTF-8&otf=1&ssel=0&tsel=0&kc=1&tk=" + tk + "&q=" + HttpUtility.UrlEncode(text);
 
-            var ResultHtml = GetResultHtml(googleTransUrl, cc, "https://translate.google.cn/");
+            var ResultHtml = GetResultHtml(googleTransUrl, cc, "https://translate.google.com.hk/");
 
             dynamic TempResult = Newtonsoft.Json.JsonConvert.DeserializeObject(ResultHtml);
-
-            string ResultText = Convert.ToString(TempResult[0][0][0]);
-
+            if (ResultHtml != "")
+            {
+                ResultText = Convert.ToString(TempResult[0][0][0]);
+            }
             return ResultText;
         }
 
         public string GetResultHtml(string url, CookieContainer cookie, string referer)
         {
-            var html = "";
-
-            var webRequest = WebRequest.Create(url) as HttpWebRequest;
-
-            webRequest.Method = "GET";
-
-            webRequest.CookieContainer = cookie;
-
-            webRequest.Referer = referer;
-
-            webRequest.Timeout = 20000;
-
-            webRequest.Headers.Add("X-Requested-With:XMLHttpRequest");
-
-            webRequest.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8";
-
-            webRequest.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36";
-
-            using (var webResponse = (HttpWebResponse)webRequest.GetResponse())
+            try
             {
-                using (var reader = new StreamReader(webResponse.GetResponseStream(), Encoding.UTF8))
-                {
+                var html = "";
 
-                    html = reader.ReadToEnd();
-                    reader.Close();
-                    webResponse.Close();
+                var webRequest = WebRequest.Create(url) as HttpWebRequest;
+
+                webRequest.Method = "GET";
+
+                webRequest.CookieContainer = cookie;
+
+                webRequest.Referer = referer;
+
+                webRequest.Timeout = 20000;
+
+                webRequest.Headers.Add("X-Requested-With:XMLHttpRequest");
+
+                webRequest.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8";
+
+                webRequest.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36";
+
+                using (var webResponse = (HttpWebResponse)webRequest.GetResponse())
+                {
+                    using (var reader = new StreamReader(webResponse.GetResponseStream(), Encoding.UTF8))
+                    {
+
+                        html = reader.ReadToEnd();
+                        reader.Close();
+                        webResponse.Close();
+                    }
                 }
+                return html;
             }
-            return html;
+            catch (Exception)
+            {
+                return "";
+            }
+
         }
 
         /// <summary>
@@ -70,7 +79,7 @@ namespace WallPaper
         /// <param name="sExpression">参数体</param>
         /// <param name="sCode">JavaScript代码的字符串</param>
         /// <returns></returns>
-      
+
         class TokenGenerator
         {
             private static A[] rl1 = new A[] { new A() { a = true, b = false, c = 10 }, new A() { a = false, b = true, c = 6 } };

@@ -214,7 +214,8 @@ namespace WallPaper
         {
             string url = await GetBingPicture();
             string english = await GetQuote();
-            string chinese = Translator.GoogleTranslate(english, "en", "zh-CN");
+            //string chinese = Translator.GoogleTranslate(english, "en", "zh-CN");
+            string chinese = "看到这行字，练习翻译一下上文，喝杯热水";
             string weather = await GetWeather();
             string file = await DownloadUrlAsFileName(url);
             string wallpaperFileName = GenerateWallpaper(file, english, chinese, weather);
